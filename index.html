@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>日米テーマ株ダッシュボード</title>
+<style>
+:root{--surface-0:#f5f4ef;--surface-1:#fbfaf7;--surface-2:#fff;--text-primary:#1f1e1d;--text-secondary:#5f5e5a;--text-muted:#888780;--text-success:#1b7f4b;--text-danger:#c43c3b;--text-accent:#185FA5;--bg-accent:#E6F1FB;--border:rgba(0,0,0,.1);--border-strong:rgba(0,0,0,.2);--border-accent:#85B7EB;--radius:8px}
+@media (prefers-color-scheme:dark){:root{--surface-0:#1f1e1d;--surface-1:#262624;--surface-2:#2c2c2a;--text-primary:#f0efec;--text-secondary:#c3c2b7;--text-muted:#898781;--text-success:#4cc38a;--text-danger:#ef6b6a;--text-accent:#85B7EB;--bg-accent:#12324f;--border:rgba(255,255,255,.1);--border-strong:rgba(255,255,255,.2);--border-accent:#378ADD}}
+body{margin:0;background:var(--surface-0);color:var(--text-primary);font-family:system-ui,-apple-system,"Segoe UI","Hiragino Sans","Yu Gothic UI",sans-serif;line-height:1.5}
+main{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:20px;font-weight:500;margin:4px 0 2px}
+button{font:inherit;font-size:13px;padding:5px 10px;border:0.5px solid var(--border-strong);border-radius:var(--radius);background:transparent;color:var(--text-primary);cursor:pointer}
+button:hover{background:var(--surface-1)}
+.kp{background:var(--surface-1);border-radius:var(--radius);padding:.75rem 1rem}
+.kp .l{font-size:12px;color:var(--text-secondary)}.kp .v{font-size:22px;font-weight:500}
+.on{background:var(--bg-accent)!important;color:var(--text-accent)!important;border-color:var(--border-accent)!important}
+.lb{paint-order:stroke;stroke:var(--surface-0);stroke-width:3px;stroke-linejoin:round;font-size:11px}
+.fl{stroke-dasharray:3 9;fill:none}
+@keyframes dash{to{stroke-dashoffset:-24}}
+@media (prefers-reduced-motion:no-preference){.anim .fl{animation:dash 1.4s linear infinite}.anim.rev .fl{animation-direction:reverse}}
+.rk{display:grid;grid-template-columns:110px minmax(0,1fr) 58px;align-items:center;gap:6px;font-size:12px;height:22px}
+#tbar{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 10px;font-size:13px}
+#tt{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px;font-variant-numeric:tabular-nums}
+#tt th{font-weight:500;font-size:12px;color:var(--text-secondary);text-align:right;padding:6px 8px;border-bottom:0.5px solid var(--border-strong)}
+#tt td{text-align:right;padding:6px 8px;border-bottom:0.5px solid var(--border)}
+#tt th:first-child,#tt td:first-child{text-align:left}#tt th:nth-child(2),#tt td:nth-child(2){text-align:center;color:var(--text-secondary)}
+#tt tbody tr{cursor:pointer}#tt tbody tr:hover td:first-child{color:var(--text-accent)}#tt tr.cur td:first-child{font-weight:500;color:var(--text-accent)}
+.card{background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px}
+</style>
+</head>
+<body>
+<main>
+<h1>日米テーマ株 サプライチェーン</h1>
+<div id="upd" style="font-size:12px;color:var(--text-muted)">読み込み中…</div>
+<div id="tbar"></div>
+<div class="card" style="padding:.75rem 1rem;margin:0 0 14px">
+<div style="display:flex;align-items:center;gap:8px;margin:0 0 4px;font-size:13px">
+<span style="font-weight:500;font-size:14px">テーマ別 平均騰落率</span><span style="flex:1"></span>
+<button class="tg on" data-g="all">全体</button><button class="tg" data-g="JP">日本勢</button><button class="tg" data-g="US">米国勢</button>
+</div>
+<div style="overflow-x:auto"><table id="tt" style="min-width:440px"></table></div>
+<div style="font-size:11px;color:var(--text-muted);margin-top:6px">上場銘柄の単純平均。5年は上場5年未満を除外。セルにカーソルで中央値、行クリックでテーマ切り替え。</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 12px">
+<div class="kp"><div class="l">日本勢 前日比平均</div><div class="v" id="kjp">–</div></div>
+<div class="kp"><div class="l">米国勢 前日比平均</div><div class="v" id="kus">–</div></div>
+<div class="kp"><div class="l">1年騰落トップ</div><div class="v" id="ktop" style="font-size:18px;padding-top:3px">–</div></div>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 8px;font-size:13px">
+<button id="mG" class="on">物の流れ（上流→下流）</button><button id="mO">発注・お金の流れ（下流→上流）</button>
+<button id="aB">点線アニメ：オフ</button>
+<span style="flex:1"></span>
+<button data-c="all" class="cf on">全部</button><button data-c="JP" class="cf">日本</button><button data-c="US" class="cf">米国</button>
+</div>
+<svg id="sk" width="100%" viewBox="0 0 680 640" role="img" aria-label="選択中テーマのサプライチェーン・サンキー図"></svg>
+<div style="display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--text-secondary);margin:4px 0 14px">
+<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#D85A30;vertical-align:-1px"></span> 日本</span>
+<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#378ADD;vertical-align:-1px"></span> 米国</span>
+<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#888780;vertical-align:-1px"></span> その他の国（参考）</span>
+<span>線の太さ＝年間取引規模の概算推定／ノードにカーソルで詳細</span>
+</div>
+<div id="det" class="card" style="padding:1rem 1.25rem;margin:0 0 16px"></div>
+<div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:13px">
+<span style="font-weight:500;font-size:15px">騰落率ランキング</span><span style="flex:1"></span>
+<button id="rD" class="on">本日</button><button id="r1">1年</button>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px">
+<div><div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px" id="hJP"></div><div id="lJP"></div></div>
+<div><div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px" id="hUS"></div><div id="lUS"></div></div>
+</div>
+<div style="font-size:11px;color:var(--text-muted);margin-top:12px"><span id="note"></span> <span id="src"></span> 取引額は決算・報道ベースの概算で、一部は推定を含みます。投資助言ではありません。</div>
+</main>
+<script>
+(async()=>{
+const bust='?v='+Date.now();
+let TJ,DJ;
+try{[TJ,DJ]=await Promise.all([fetch('themes.json'+bust).then(r=>r.json()),fetch('data.json'+bust).then(r=>r.json())])}
+catch(e){document.getElementById('upd').textContent='データを読み込めませんでした';return}
+const C={};
+for(const[id,c]of Object.entries(TJ.companies)){const q=DJ.quotes[id];
+C[id]=!c[1]?[c[0],'',c[2],c[3]]:!q?[c[0],'',c[2],'データなし']:[c[0],c[1],c[2],c[3],q.p,q.mc,q.ch,q.m1,q.ytd,q.y5,q.yr]}
+const T=TJ.themes;
+document.getElementById('upd').textContent=`最終更新 ${DJ.updated}（日本株 ${DJ.asof_jp||'–'}・米国株 ${DJ.asof_us||'–'} 時点）`;
+document.getElementById('src').textContent=`株価は Yahoo Finance（${DJ.updated} 取得）。`;
+const COL={JP:'#D85A30',US:'#378ADD'},cc=c=>COL[c]||'#888780';
+const W=680,NW=8,TOP=30,H=600,PAD=16,IX={ch:6,m1:7,ytd:8,y5:9},PER=[['ch','前日比',4],['m1','1ヶ月',15],['ytd','年初来',80],['y5','5年',600]];
+let N={},L=[],lkEls=[],ndEls=[],mode='G',ctry='all',hov=null,sel=null,anim=false,rk='ch',theme='ai',tgrp='all';
+const svg=document.getElementById('sk');
+const star=(cx,cy,r)=>{const p=[];for(let i=0;i<10;i++){const a=(-90+36*i)*Math.PI/180,q=i%2?r*.4:r;p.push((cx+q*Math.cos(a)).toFixed(2)+','+(cy+q*Math.sin(a)).toFixed(2))}return p.join(' ')};
+function flag(c,x,y){const w=16,h=11,b='stroke="#B4B2A9" stroke-width=".5"',R=(f,xx=x,yy=y,ww=w,hh=h)=>`<rect x="${xx}" y="${yy}" width="${ww}" height="${hh}" fill="${f}"/>`;
+if(c==='JP')return`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff" ${b}/><circle cx="${x+8}" cy="${y+5.5}" r="3.2" fill="#BC002D"/>`;
+if(c==='US'){let s=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff" ${b}/>`;for(let i=0;i<7;i+=2)s+=R('#B22234',x,y+i*h/7,w,h/7);return s+R('#3C3B6E',x,y,7,h*4/7)}
+if(c==='TW')return R('#FE0000')+R('#000095',x,y,8,5.5)+`<circle cx="${x+4}" cy="${y+2.75}" r="1.6" fill="#fff"/>`;
+if(c==='KR')return`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff" ${b}/><path d="M${x+4.8} ${y+5.5}a3.2 3.2 0 0 1 6.4 0z" fill="#CD2E3A"/><path d="M${x+4.8} ${y+5.5}a3.2 3.2 0 0 0 6.4 0z" fill="#0047A0"/><path d="M${x+1.5} ${y+1.5}l2 2M${x+14.5} ${y+1.5}l-2 2M${x+1.5} ${y+9.5}l2-2M${x+14.5} ${y+9.5}l-2-2" stroke="#000" stroke-width=".8"/>`;
+if(c==='CN')return R('#DE2910')+`<polygon points="${star(x+3.6,y+3.4,2.3)}" fill="#FFDE00"/>`+[[7.2,1.3],[8.4,2.8],[8.4,4.6],[7.2,6]].map(([a,d])=>`<circle cx="${x+a}" cy="${y+d}" r=".55" fill="#FFDE00"/>`).join('');
+if(c==='DK')return R('#C8102E')+R('#fff',x+5,y,2,h)+R('#fff',x,y+4.5,w,2);
+if(c==='DE')return R('#000',x,y,w,h/3)+R('#DD0000',x,y+h/3,w,h/3)+R('#FFCE00',x,y+2*h/3,w,h/3);
+if(c==='AU')return R('#012169')+`<path d="M${x} ${y}L${x+8} ${y+5.5}M${x+8} ${y}L${x} ${y+5.5}" stroke="#fff" stroke-width="1"/><path d="M${x+4} ${y}v5.5M${x} ${y+2.75}h8" stroke="#fff" stroke-width="1.6"/><path d="M${x+4} ${y}v5.5M${x} ${y+2.75}h8" stroke="#C8102E" stroke-width=".8"/>`+[[4,8.5,1.1],[12,2.5,.7],[13.8,5.5,.7],[11,8.8,.7],[12.6,7,.5]].map(([a,d,r])=>`<circle cx="${x+a}" cy="${y+d}" r="${r}" fill="#fff"/>`).join('');
+if(c==='GB')return R('#012169')+`<path d="M${x} ${y}L${x+w} ${y+h}M${x+w} ${y}L${x} ${y+h}" stroke="#fff" stroke-width="2"/><path d="M${x} ${y}L${x+w} ${y+h}M${x+w} ${y}L${x} ${y+h}" stroke="#C8102E" stroke-width=".7"/><path d="M${x+8} ${y}v${h}M${x} ${y+5.5}h${w}" stroke="#fff" stroke-width="3"/><path d="M${x+8} ${y}v${h}M${x} ${y+5.5}h${w}" stroke="#C8102E" stroke-width="1.6"/>`;
+return R('#B4B2A9')+`<circle cx="${x+8}" cy="${y+5.5}" r="3" fill="none" stroke="#fff" stroke-width=".8"/><path d="M${x+5} ${y+5.5}h6" stroke="#fff" stroke-width=".6"/>`}
+const chg=v=>v==null?['–','var(--text-muted)']:v>0?['▲'+v.toFixed(1)+'%','var(--text-success)']:v<0?['▼'+Math.abs(v).toFixed(1)+'%','var(--text-danger)']:['±0.0%','var(--text-secondary)'];
+const pct=v=>(v>0?'+':v<0?'-':'±')+(Math.abs(v)>=100?Math.round(Math.abs(v)).toLocaleString():Math.abs(v).toFixed(1))+'%';
+const amt=v=>v>=.1?Math.round(v*10).toLocaleString()+'億ドル':Math.max(1,Math.round(v*100))+'千万ドル';
+const fsvg=c=>`<svg width="20" height="14" viewBox="0 0 20 14" style="vertical-align:-2px">${flag(c,2,1.5)}</svg>`;
+const fp=n=>n.cur==='JPY'?'¥'+n.p.toLocaleString():n.cur==='KRW'?'₩'+n.p.toLocaleString():n.cur==='CNY'?n.p.toFixed(2)+'元':(n.cur==='AUD'?'A$':n.cur==='EUR'?'€':'$')+n.p.toFixed(2);
+const fm=n=>{const m=n.mc;if(m==null)return'–';if(n.cur==='JPY')return m>=1e12?(m/1e12).toFixed(1)+'兆円':Math.round(m/1e8).toLocaleString()+'億円';if(n.cur==='KRW')return Math.round(m/1e12)+'兆ウォン';const u={CNY:'億元',AUD:'億豪ドル',EUR:'億ユーロ'}[n.cur];if(u)return Math.round(m/1e8).toLocaleString()+u;return m>=1e12?(m/1e12).toFixed(2)+'兆ドル':Math.round(m/1e8).toLocaleString()+'億ドル'};
+const lbl=n=>{if(n.p==null)return`${n.name} <tspan style="fill:var(--text-muted)">${n.tag}</tspan>`;const[t,tc]=chg(n.ch);return`${n.name} <tspan style="fill:${tc}">${t}</tspan>`};
+function listed(){const ls=Object.values(N).filter(n=>n.p!=null);return[ls.filter(n=>n.c==='JP'),ls.filter(n=>n.c==='US')]}
+function ttable(){const rows=Object.entries(T).map(([k,t])=>{const ids=t.nodes.map(n=>n[0]).filter(id=>C[id][1]!==''&&(tgrp==='all'||C[id][2]===tgrp));
+const cells=PER.map(([p,,S])=>{const v=ids.map(id=>C[id][IX[p]]).filter(x=>x!=null);if(!v.length)return'<td>–</td>';const m=v.reduce((a,b)=>a+b,0)/v.length,s=v.slice().sort((a,b)=>a-b),md=s.length%2?s[(s.length-1)/2]:(s[s.length/2-1]+s[s.length/2])/2,al=(Math.min(Math.abs(m)/S,1)*.45).toFixed(2),bg=m>0?`rgba(29,158,117,${al})`:m<0?`rgba(226,75,74,${al})`:'transparent';
+return`<td title="中央値 ${pct(md)}（${v.length}社）" style="background:${bg}">${pct(m)}</td>`}).join('');
+return`<tr data-k="${k}" class="${k===theme?'cur':''}"><td>${k===theme?'▶ ':''}${t.label}</td><td>${ids.length}</td>${cells}</tr>`}).join('');
+document.getElementById('tt').innerHTML=`<colgroup><col style="width:30%"><col style="width:10%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col style="width:15%"></colgroup><thead><tr><th>テーマ</th><th>銘柄</th>${PER.map(p=>`<th>${p[1]}</th>`).join('')}</tr></thead><tbody>${rows}</tbody>`;
+document.querySelectorAll('#tt tbody tr').forEach(r=>r.onclick=()=>build(r.dataset.k))}
+function paint(){lkEls.forEach((g,i)=>{const l=L[i],col=cc(mode==='G'?l.s.c:l.t.c);
+const on=hov?(l.s.id===hov||l.t.id===hov):(ctry==='all'||l.s.c===ctry||l.t.c===ctry);
+const rb=g.children[0],fl=g.children[1];rb.setAttribute('fill',col);rb.setAttribute('fill-opacity',on?(hov?.55:.3):.05);fl.setAttribute('stroke',col);fl.setAttribute('stroke-opacity',on?.9:0)});
+ndEls.forEach(g=>{const n=N[g.dataset.id];const on=hov?(n.id===hov||n.ins.some(l=>l.s.id===hov)||n.outs.some(l=>l.t.id===hov)):(ctry==='all'||n.c===ctry);g.style.opacity=on?1:.25});
+svg.classList.toggle('rev',mode==='O');svg.classList.toggle('anim',anim)}
+function lst(arr,key,lbl2){if(!arr.length)return'';const mx=Math.max(...arr.map(l=>l.v));
+return`<div style="font-size:12px;color:var(--text-secondary);margin:10px 0 4px">${lbl2}</div>`+arr.slice().sort((a,b)=>b.v-a.v).map(l=>{const o=l[key];return`<div style="display:grid;grid-template-columns:150px minmax(0,1fr) 84px;gap:6px;align-items:center;font-size:12px;height:20px"><span style="white-space:nowrap;overflow:hidden">${fsvg(o.c)} ${o.name}</span><span style="height:8px;border-radius:0 3px 3px 0;background:${cc(o.c)};width:${Math.max(2,l.v/mx*100)}%"></span><span style="text-align:right;color:var(--text-secondary)">${amt(l.v)}</span></div>`}).join('')}
+function det(id){const n=N[id];if(!n)return;let body;
+if(n.p==null)body=`<div style="font-size:13px;color:var(--text-secondary);margin-top:10px">${n.tag==='政府'?'政府・公的機関のため株価なし':n.tag==='集計'?'最終需要をまとめたもの（株価なし）':n.tag==='データなし'?'株価を取得できませんでした':'非上場のため株価なし'}</div>`;
+else{const[t,tc]=chg(n.ch),[t1,tc1]=chg(n.yr);body=`<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px"><div class="kp"><div class="l">株価</div><div style="font-size:16px;font-weight:500">${fp(n)}</div></div><div class="kp"><div class="l">前日比</div><div style="font-size:16px;font-weight:500;color:${tc}">${t}</div></div><div class="kp"><div class="l">1年騰落</div><div style="font-size:16px;font-weight:500;color:${tc1}">${t1}</div></div><div class="kp"><div class="l">時価総額</div><div style="font-size:16px;font-weight:500">${fm(n)}</div></div></div>`}
+document.getElementById('det').innerHTML=`<div style="display:flex;align-items:center;gap:10px">${fsvg(n.c)}<div><div style="font-size:16px;font-weight:500">${n.name} <span style="font-size:12px;color:var(--text-muted);font-weight:400">${n.tk||n.tag}</span></div><div style="font-size:12px;color:var(--text-secondary)">${n.role}</div></div></div>`+body+lst(n.ins,'s','仕入先（上流）＝こちらから発注している相手')+lst(n.outs,'t','販売先（下流）＝こちらに発注してくる相手')}
+function kpi(){const[jp,us]=listed();[['kjp',jp],['kus',us]].forEach(([id,a])=>{const e=document.getElementById(id),v=a.map(n=>n.ch).filter(x=>x!=null);if(!v.length){e.textContent='–';e.style.color='';return}const[t,c]=chg(v.reduce((s,x)=>s+x,0)/v.length);e.textContent=t;e.style.color=c});
+const b=[...jp,...us].filter(n=>n.yr!=null).sort((x,y)=>y.yr-x.yr)[0];document.getElementById('ktop').innerHTML=b?`${fsvg(b.c)} ${b.name} <span style="color:${chg(b.yr)[1]}">${b.yr>0?'+':''}${Math.round(b.yr)}%</span>`:'–'}
+function rank(k){rk=k;let[jp,us]=listed();jp=jp.filter(n=>n[k]!=null);us=us.filter(n=>n[k]!=null);const vals=[...jp,...us].map(n=>n[k]),lo=Math.min(0,...vals),hi=Math.max(0,...vals),sp=(hi-lo)||1,z=-lo/sp*100;
+[['JP',jp,'日本勢'],['US',us,'米国勢']].forEach(([c,a,h])=>{document.getElementById('h'+c).innerHTML=`${fsvg(c)} ${h}（${a.length}社）`;
+document.getElementById('l'+c).innerHTML=a.slice().sort((x,y)=>y[k]-x[k]).map(n=>{const v=n[k],w=Math.abs(v)/sp*100,[t,tc]=chg(v);
+return`<div class="rk"><span style="white-space:nowrap;overflow:hidden">${n.name}</span><span style="position:relative;height:10px"><span style="position:absolute;left:${z}%;top:-3px;bottom:-3px;width:1px;background:var(--border-strong)"></span><span style="position:absolute;top:0;height:10px;left:${v>=0?z:z-w}%;width:${Math.max(.5,w)}%;background:${cc(c)};border-radius:${v>=0?'0 3px 3px 0':'3px 0 0 3px'}"></span></span><span style="text-align:right;color:${tc}">${t}</span></div>`}).join('')});
+document.getElementById('rD').classList.toggle('on',k==='ch');document.getElementById('r1').classList.toggle('on',k==='yr')}
+function build(key){theme=key;const th=T[key],nc=th.heads.length,X=c=>c*(W-NW)/(nc-1);
+N={};th.nodes.forEach(([id,col,role])=>{const a=C[id],n={id,name:a[0],tk:a[1],c:a[2],col,role,ins:[],outs:[]};if(a[1]===''){n.p=null;n.tag=a[3]}else Object.assign(n,{cur:a[3],p:a[4],mc:a[5],ch:a[6],m1:a[7],ytd:a[8],y5:a[9],yr:a[10]});N[id]=n});
+L=th.links.map(([s,t,v])=>{const l={s:N[s],t:N[t],v};N[s].outs.push(l);N[t].ins.push(l);return l});
+const cols=Array.from({length:nc},()=>[]),ns=Object.values(N);
+ns.forEach(n=>{n.v=Math.max(n.ins.reduce((a,l)=>a+l.v,0),n.outs.reduce((a,l)=>a+l.v,0));n.x=X(n.col);cols[n.col].push(n)});
+const ky=Math.min(...cols.map(c=>{const s=c.reduce((a,n)=>a+n.v,0);return s>0?(H-(c.length-1)*PAD)/s:1e9}));
+L.forEach(l=>l.w=Math.max(l.v*ky,.8));
+ns.forEach(n=>{n.h=Math.max(n.ins.reduce((a,l)=>a+l.w,0),n.outs.reduce((a,l)=>a+l.w,0),1.5)});
+let maxY=0;cols.forEach(c=>{const tot=c.reduce((a,n)=>a+n.h,0)+(c.length-1)*PAD;let y=TOP+Math.max(0,(H-tot)/2);c.forEach(n=>{n.y0=y;n.y1=y+n.h;y=n.y1+PAD;maxY=Math.max(maxY,n.y1)})});
+ns.forEach(n=>{let y=n.y0;n.outs.sort((a,b)=>a.t.y0-b.t.y0).forEach(l=>{l.sy0=y;y+=l.w;l.sy1=y});y=n.y0;n.ins.sort((a,b)=>a.s.y0-b.s.y0).forEach(l=>{l.ty0=y;y+=l.w;l.ty1=y})});
+let s='';th.heads.forEach((h,i)=>{const last=i===nc-1;s+=`<text x="${last?W:X(i)}" y="14" text-anchor="${last?'end':'start'}" style="font-size:11px;fill:var(--text-muted)">${h}</text>`});
+s+='<g id="lk">';L.forEach((l,i)=>{const x0=l.s.x+NW,x1=l.t.x,xm=(x0+x1)/2,a=(l.sy0+l.sy1)/2,b=(l.ty0+l.ty1)/2;
+s+=`<g><path d="M${x0} ${l.sy0}C${xm} ${l.sy0} ${xm} ${l.ty0} ${x1} ${l.ty0}L${x1} ${l.ty1}C${xm} ${l.ty1} ${xm} ${l.sy1} ${x0} ${l.sy1}Z" stroke="none"><title>${l.s.name} → ${l.t.name}　約${amt(l.v)}/年（推定）\n発注・支払：${l.t.name} → ${l.s.name}</title></path><path class="fl" d="M${x0} ${a}C${xm} ${a} ${xm} ${b} ${x1} ${b}" stroke-width="1"/></g>`});s+='</g><g id="nd">';
+ns.forEach(n=>{const cy=(n.y0+n.y1)/2,R=n.col===nc-1;
+s+=`<g data-id="${n.id}" style="cursor:pointer"><rect x="${n.x}" y="${n.y0}" width="${NW}" height="${n.h}" rx="1" fill="${cc(n.c)}"/>`+(R?flag(n.c,n.x-20,cy-5.5)+`<text class="lb" x="${n.x-24}" y="${cy}" text-anchor="end" dominant-baseline="central" style="fill:var(--text-primary)">${lbl(n)}</text>`:flag(n.c,n.x+NW+4,cy-5.5)+`<text class="lb" x="${n.x+NW+23}" y="${cy}" dominant-baseline="central" style="fill:var(--text-primary)">${lbl(n)}</text>`)+'</g>'});
+svg.setAttribute('viewBox',`0 0 ${W} ${Math.max(640,Math.ceil(maxY+12))}`);svg.innerHTML=s+'</g>';
+lkEls=[...svg.querySelectorAll('#lk>g')];ndEls=[...svg.querySelectorAll('#nd>g')];
+ndEls.forEach(g=>{g.addEventListener('mouseenter',()=>{hov=g.dataset.id;paint();det(hov)});g.addEventListener('mouseleave',()=>{hov=null;paint();det(sel)});g.addEventListener('click',()=>{sel=g.dataset.id;det(sel)})});
+hov=null;sel=ns.slice().sort((a,b)=>b.v-a.v)[0].id;
+document.getElementById('note').textContent=th.note;
+document.querySelectorAll('.tb').forEach(x=>x.classList.toggle('on',x.dataset.k===key));
+ttable();kpi();paint();det(sel);rank(rk)}
+document.getElementById('tbar').innerHTML=Object.entries(T).map(([k,t])=>`<button class="tb" data-k="${k}">${t.label}</button>`).join('');
+document.querySelectorAll('.tb').forEach(b=>b.onclick=()=>build(b.dataset.k));
+document.querySelectorAll('.tg').forEach(b=>b.onclick=()=>{tgrp=b.dataset.g;document.querySelectorAll('.tg').forEach(x=>x.classList.toggle('on',x===b));ttable()});
+const mG=document.getElementById('mG'),mO=document.getElementById('mO'),aB=document.getElementById('aB');
+mG.onclick=()=>{mode='G';mG.classList.add('on');mO.classList.remove('on');paint()};
+mO.onclick=()=>{mode='O';mO.classList.add('on');mG.classList.remove('on');paint()};
+aB.onclick=()=>{anim=!anim;aB.textContent='点線アニメ：'+(anim?'オン':'オフ');aB.classList.toggle('on',anim);paint()};
+document.querySelectorAll('.cf').forEach(b=>b.onclick=()=>{ctry=b.dataset.c;document.querySelectorAll('.cf').forEach(x=>x.classList.toggle('on',x===b));paint()});
+document.getElementById('rD').onclick=()=>rank('ch');document.getElementById('r1').onclick=()=>rank('yr');
+build('ai');
+})();
+</script>
+</body>
+</html>
