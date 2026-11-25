@@ -41,5 +41,8 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .
+      # 11/24 夜から、上げた直後のファイルを公開側が見つけられず失敗するので、少し待ってから公開する
+      - name: 公開の前に少し待つ
+        run: sleep 45
       - id: deploy
         uses: actions/deploy-pages@v4
